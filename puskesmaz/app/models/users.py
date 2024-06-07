@@ -1,5 +1,6 @@
 import sqlite3
 from flask import current_app
+from app.utils import hash_password
 
 def connect_to_db():
     conn = sqlite3.connect(current_app.config['DATABASE'])
@@ -13,6 +14,7 @@ def create_users_table():
                 user_id INTEGER PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
                 email TEXT NOT NULL,
+                password TEXT NOT NULL,
                 phone TEXT NOT NULL,
                 address TEXT NOT NULL,
                 country TEXT NOT NULL
@@ -30,8 +32,9 @@ def insert_user(user):
     try:
         conn = connect_to_db()
         cur = conn.cursor()
-        cur.execute('''INSERT INTO users (name, email, phone, address, country) VALUES (?, ?, ?, ?, ?)''', 
-                    (user['name'], user['email'], user['phone'], user['address'], user['country']))
+        hashed_password = hash_password(user['password'])
+        cur.execute('''INSERT INTO users (name, email, password, phone, address, country) VALUES (?, ?, ?, ?, ?, ?)''', 
+                    (user['name'], user['email'], hashed_password, user['phone'], user['address'], user['country']))
         conn.commit()
         inserted_user = get_user_by_id(cur.lastrowid)
     except Exception as e:
@@ -40,6 +43,28 @@ def insert_user(user):
     finally:
         conn.close()
     return inserted_user
+
+def get_user_by_email(email):
+    user = {}
+    try:
+        conn = connect_to_db()
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE email = ?", (email,))
+        row = cur.fetchone()
+        if row:
+            user["user_id"] = row["user_id"]
+            user["name"] = row["name"]
+            user["email"] = row["email"]
+            user["password"] = row["password"]
+            user["phone"] = row["phone"]
+            user["address"] = row["address"]
+            user["country"] = row["country"]
+    except Exception as e:
+        print(e)
+        user = {}
+    return user
+
 
 def get_users():
     users = []

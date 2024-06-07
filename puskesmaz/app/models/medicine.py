@@ -13,6 +13,8 @@ def create_medicine_table():
                 medicine_id INTEGER PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
                 description TEXT NOT NULL,
+                manufacturer TEXT NOT NULL,
+                expiry_date TEXT NOT NULL,
                 price REAL NOT NULL
             );
         ''')
